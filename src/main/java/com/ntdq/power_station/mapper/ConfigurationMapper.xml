@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ntdq.power_station.mapper.ConfigurationMapper">
+    <resultMap id="config" type="com.ntdq.power_station.domain.PointConfiguration">
+        <result property="fieldName" column="mp_code"/>
+        <result property="address" column="mp_address"/>
+    </resultMap>
+
+    <select id="getAllConfigByYC" resultMap="config">
+        select mp_code,mp_address
+        from t_yc_point
+        where dev_main_type = #{devMainType}
+    </select>
+
+    <select id="getAllConfigByYX" resultMap="config">
+        select mp_code,mp_address
+        from t_yx_point
+        where dev_main_type = #{devMainType}
+    </select>
+
+    <insert id="savePointYXConfigBatch" parameterType="java.util.List">
+        insert into t_yx_point (dev_main_type,dev_sub_type,mp_code,mp_name
+        ,mp_address,remark) values
+        <foreach collection="pointConfigurations" item="model" index="index" separator=",">
+            (#{model.deviceType},#{model.deviceSubType},
+            #{model.fieldCode},#{model.fieldName},#{model.address},#{model.deviceName})
+        </foreach>
+    </insert>
+
+    <insert id="savePointYCConfigBatch" parameterType="java.util.List">
+        insert into t_yc_point (dev_main_type,dev_sub_type,mp_code,mp_name
+        ,mp_address,remark) values
+        <foreach collection="pointConfigurations" item="model" index="index" separator=",">
+            (#{model.deviceType},#{model.deviceSubType},
+            #{model.fieldCode},#{model.fieldName},#{model.address},#{model.deviceName})
+        </foreach>
+    </insert>
+
+</mapper>

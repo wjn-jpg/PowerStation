@@ -1,0 +1,102 @@
+socket:
+  style:
+    #    message: 104,MQTT,UDP,MODBUS
+    #    message: MODBUS
+    #    message: 104
+    #    message: MQTT
+    #    message: NULL 104Photovoltaic 104Energy
+    message: 104Photovoltaic
+loginUser:
+  token:
+    timeout: 3600000
+    subject: ntdq
+#    secretKey: com.secretKey
+104:
+  server:
+    photovoltaic:
+#      addr: 192.168.0.62
+      addr: 127.0.0.1
+      port: 2404
+  client:
+    energy:
+      #  addr: 192.168.0.159
+      addr: 192.168.0.159
+      port: 2409
+    distribution:
+      addr: 192.168.0.110
+      port: 2409
+
+power:
+  addr: 127.0.0.1
+  #  addr: 192.168.10.220
+  port: 8086
+mqtt:
+  server:
+    addr: 127.0.0.1
+    port: 8088
+    username: ntdq
+    password: ntdq
+    isNeedVerify: false
+  client:
+    username: ntdq
+    password: ntdq
+    defaultTopic: ntdq
+    clientId: UDPMessage-Mqtt
+    url: tcp://192.168.0.16:1883
+    completionTimeout: 120000
+    keepAliveInterval: 120000
+modbus:
+  addr: 192.168.171.1
+  port: 502
+spring:
+  profiles:
+    active: local #local
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+  kafka:
+    bootstrap-servers: 192.168.31.140:9092
+    producer:
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+      acks: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      auto-offset-reset: latest
+      group-id: NTDQ
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/Manager?useUnicode=true&useJDBCCompliantTimezoneShift=true&serverTimezone=UTC&characterEncoding=utf8
+    username: root
+    password: 11111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    ######################### Druid????????  #################
+    initialSize: 5
+    minIdle: 5
+    maxActive: 20
+    maxWait: 6000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    validationQuery: SELECT 1 FROM DUAL
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 20
+    filters: stat,wall
+    useGlobalDataSourceStat: true
+    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+server:
+  port: 9090
+  address: 127.0.0.1
+
+logging:
+  config: logback.xml
