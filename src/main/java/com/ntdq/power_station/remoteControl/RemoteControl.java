@@ -1,5 +1,6 @@
 package com.ntdq.power_station.remoteControl;
 
+import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.ntdq.power_station.remoteControl.vo.RemoteVO;
@@ -15,9 +16,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.NetServerOptions;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -30,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * 我需要每一次连接成功后 将我的ChannelPromise 和 一些回调函数注册进去
  */
 @Component
-public class RemoteControl extends AbstractVerticle {
+public class RemoteControl extends AbstractVerticle implements InitializingBean {
 
     private static ChannelPromise controlCommandPromise;
 
@@ -42,12 +46,14 @@ public class RemoteControl extends AbstractVerticle {
 
     @Override
     public void start() throws Exception {
+//        NetServerOptions netServerOptions = new NetServerOptions().setPort(9999);
         EventBus eventBus = vertx.eventBus();
-        eventBus.consumer("Netty.method", message -> {
+        eventBus.consumer("Power.Control", message -> {
             JsonObject params = (JsonObject) message.body();
             JsonElement power = params.get("power");
             //TODO 执行方法返回返回结果
-            startExecuteStrategy(power.getAsInt(), DeviceEnum.Energy);
+            RemoteVO remoteVO = startExecuteStrategy(power.getAsInt(), DeviceEnum.Energy);
+            message.reply(Buffer.buffer(JSON.toJSONString(remoteVO)));
         });
     }
 
@@ -78,21 +84,9 @@ public class RemoteControl extends AbstractVerticle {
         //拿到执行策略阻塞器
         PromiseWrapper channelPromiseWrapper = Iec104ClientInitializer.getClientHandler(deviceEnum).getChannelPromiseWrapper(controlCommandCallback);
         controlCommandPromise = channelPromiseWrapper.getChannelPromise();
-        MessageDetail messageDetail = new MessageDetail(1, (short) 1);
-//        ChannelFuture sendFuture =
-        channelPromiseWrapper.getChannel().writeAndFlush(messageDetail);
-//        sendFuture.addListener((ChannelFutureListener) future -> {
-//            if (future.isSuccess()) {
-//                // The control command was successfully sent
-//                // You can update the controlCommandPromise with the success result
-//                controlCommandPromise.setSuccess();
-//            } else {
-//                // The control command failed to send
-//                // You can update the controlCommandPromise with the failure result
-//                controlCommandPromise.setFailure(future.cause());
-//            }
-//        });
-        controlCommandPromise.await();
+//        MessageDetail messageDetail = new MessageDetail(1, (short) 1);
+//        channelPromiseWrapper.getChannel().writeAndFlush(messageDetail);
+        controlCommandPromise.await(3, TimeUnit.SECONDS);
         return RemoteVO.createResult(deviceEnum.name(), controlCommandPromise.isSuccess());
     }
 
@@ -175,4 +169,9 @@ public class RemoteControl extends AbstractVerticle {
     }
 
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        Vertx vertx = Vertx.vertx();
+        vertx.deployVerticle(this);
+    }
 }
